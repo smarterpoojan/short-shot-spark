@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit, Terminal, Captions, Settings } from 'lucide-react';
+import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit, Terminal, Captions, Settings, Zap } from 'lucide-react';
 import { videoProcessor, VideoClip } from '@/services/videoProcessor';
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +22,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [showConsole, setShowConsole] = useState(false);
   const [captionsEnabled, setCaptionsEnabled] = useState(true);
+  const [captionStyle, setCaptionStyle] = useState<'opus' | 'tiktok' | 'youtube'>('opus');
+  const [fastMode, setFastMode] = useState(true);
   const [reframeSettings, setReframeSettings] = useState({
     aspectRatio: '9:16',
     focusPoint: 'center',
@@ -37,68 +39,70 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   };
 
   useEffect(() => {
-    addConsoleLog('Dashboard initialized');
+    addConsoleLog('🚀 FAST MODE Dashboard initialized');
     if (currentVideo && currentVideo.file) {
-      addConsoleLog(`Processing video: ${currentVideo.name}`);
+      addConsoleLog(`⚡ Processing video: ${currentVideo.name} with FAST MODE enabled`);
       processVideoFile();
     } else {
-      addConsoleLog('No video file provided, using mock data');
-      // Fallback to mock data if no actual file
+      addConsoleLog('📝 No video file provided, generating OPUS-style mock data');
+      // Enhanced mock data with Opus-style captions
       setTimeout(() => {
-        addConsoleLog('Generating mock viral clips');
+        addConsoleLog('🎯 Generating viral clips with OPUS captions');
         setGeneratedShorts([
           {
             id: '1',
-            title: "Viral Moment #1: Key Insight",
+            title: "🔥 This Will Blow Your Mind",
             startTime: 15,
             endTime: 45,
             duration: 30,
             engagementScore: 95,
-            description: "High-energy segment with actionable advice",
+            description: "High-energy viral moment with maximum engagement potential",
             captions: [
-              { text: "This is the most important tip", start: 0, end: 2.5 },
-              { text: "that will change everything", start: 2.5, end: 4.8 },
-              { text: "for your success!", start: 4.8, end: 6.5 }
+              { text: "This is the moment", start: 0, end: 1.5, style: 'highlight', position: 'center', animation: 'typewriter' },
+              { text: "that changes everything", start: 1.7, end: 3.2, style: 'emphasis', position: 'center', animation: 'bounce' },
+              { text: "Pay close attention", start: 3.5, end: 5.0, style: 'normal', position: 'bottom', animation: 'slide' },
+              { text: "to what happens next", start: 5.2, end: 6.8, style: 'highlight', position: 'center', animation: 'fade' }
             ]
           },
           {
             id: '2',
-            title: "Emotional Peak #2: Story Time",
+            title: "💡 The Secret Everyone's Talking About",
             startTime: 120,
             endTime: 165,
             duration: 45,
             engagementScore: 88,
-            description: "Personal story with emotional connection",
+            description: "Emotional peak designed for maximum shares and saves",
             captions: [
-              { text: "Let me tell you a story", start: 0, end: 2.2 },
-              { text: "that changed my perspective", start: 2.2, end: 4.5 },
-              { text: "on everything I thought I knew", start: 4.5, end: 7.0 }
+              { text: "The secret they don't", start: 0, end: 1.8, style: 'emphasis', position: 'top', animation: 'typewriter' },
+              { text: "want you to know", start: 2.0, end: 3.5, style: 'highlight', position: 'center', animation: 'bounce' },
+              { text: "is about to be revealed", start: 3.8, end: 5.5, style: 'normal', position: 'bottom', animation: 'slide' }
             ]
           },
           {
             id: '3',
-            title: "Quick Tip #3: How-To Guide",
+            title: "🚀 Game-Changing Moment",
             startTime: 300,
             endTime: 315,
             duration: 15,
             engagementScore: 92,
-            description: "Practical tip in bite-sized format",
+            description: "Entertainment gold with built-in shareability factors",
             captions: [
-              { text: "Here's the secret technique", start: 0, end: 2.0 },
-              { text: "that pros don't want you to know", start: 2.0, end: 4.5 }
+              { text: "Everything you knew", start: 0, end: 1.5, style: 'normal', position: 'center', animation: 'fade' },
+              { text: "was completely wrong", start: 1.7, end: 3.2, style: 'highlight', position: 'center', animation: 'typewriter' }
             ]
           }
         ]);
         setProcessingProgress(100);
         setIsProcessing(false);
-        addConsoleLog('Mock data generation completed');
-      }, 3000);
+        addConsoleLog('✅ OPUS mock data generation completed with animated captions');
+      }, 2000); // Faster mock processing
     }
   }, [currentVideo]);
 
   const processVideoFile = async () => {
     try {
-      addConsoleLog('Starting video processing pipeline');
+      addConsoleLog('🚀 Starting FAST MODE video processing pipeline');
+      addConsoleLog(`🎨 Caption style: ${captionStyle.toUpperCase()}, Fast mode: ${fastMode ? 'ON' : 'OFF'}`);
       
       const clips = await videoProcessor.processVideo(
         currentVideo.file, 
@@ -106,26 +110,28 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
           setProcessingProgress(progress.progress);
           setProcessingStage(progress.stage);
           setProcessingMessage(progress.message);
-          addConsoleLog(`Processing: ${progress.stage} - ${progress.message} (${progress.progress}%)`);
+          addConsoleLog(`⚡ FAST: ${progress.stage} - ${progress.message} (${progress.progress}%)`);
         },
         {
           generateCaptions: captionsEnabled,
-          reframeSettings: reframeSettings
+          captionStyle: captionStyle,
+          reframeSettings: reframeSettings,
+          fastMode: fastMode
         }
       );
       
-      addConsoleLog(`Generated ${clips.length} clips successfully`);
+      addConsoleLog(`🏆 FAST MODE: Generated ${clips.length} clips with ${captionStyle} captions successfully`);
       setGeneratedShorts(clips);
       setIsProcessing(false);
       
       toast({
-        title: "Processing Complete!",
-        description: `Generated ${clips.length} viral-ready short clips with captions`,
+        title: "⚡ Fast Processing Complete!",
+        description: `Generated ${clips.length} viral-ready clips with ${captionStyle.toUpperCase()} captions in record time`,
       });
       
     } catch (error) {
-      console.error('Video processing failed:', error);
-      addConsoleLog(`Error: Video processing failed - ${error}`);
+      console.error('❌ FAST MODE: Video processing failed:', error);
+      addConsoleLog(`❌ Error: Fast video processing failed - ${error}`);
       toast({
         title: "Processing Failed",
         description: "Unable to process video. Please try again.",
@@ -240,7 +246,7 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center">
                     <Terminal className="w-4 h-4 mr-2" />
-                    Processing Console
+                    ⚡ Fast Processing Console
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -255,13 +261,27 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
               </Card>
             )}
 
-            {/* Processing Settings */}
+            {/* Enhanced Processing Settings */}
             <Card className="bg-black/40 border-gray-800 backdrop-blur-sm mb-6">
               <CardHeader>
-                <CardTitle className="text-white">Processing Options</CardTitle>
+                <CardTitle className="text-white">⚡ Fast Processing Options</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="fastMode"
+                      checked={fastMode}
+                      onChange={(e) => setFastMode(e.target.checked)}
+                      className="rounded"
+                    />
+                    <label htmlFor="fastMode" className="text-white flex items-center">
+                      <Zap className="w-4 h-4 mr-2" />
+                      Fast Mode
+                    </label>
+                  </div>
+                  
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -272,8 +292,21 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                     />
                     <label htmlFor="captions" className="text-white flex items-center">
                       <Captions className="w-4 h-4 mr-2" />
-                      Auto-generate Captions
+                      Auto-Captions
                     </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <label className="text-white">Caption Style:</label>
+                    <select
+                      value={captionStyle}
+                      onChange={(e) => setCaptionStyle(e.target.value as 'opus' | 'tiktok' | 'youtube')}
+                      className="bg-gray-800 text-white rounded px-2 py-1"
+                    >
+                      <option value="opus">🎯 Opus Style</option>
+                      <option value="tiktok">📱 TikTok Style</option>
+                      <option value="youtube">📺 YouTube Style</option>
+                    </select>
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -286,11 +319,14 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                       <option value="9:16">9:16 (Vertical)</option>
                       <option value="16:9">16:9 (Horizontal)</option>
                       <option value="1:1">1:1 (Square)</option>
+                      <option value="4:5">4:5 (Instagram)</option>
                     </select>
                   </div>
-                  
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
                   <div className="flex items-center space-x-2">
-                    <label className="text-white">Focus:</label>
+                    <label className="text-white">Focus Point:</label>
                     <select
                       value={reframeSettings.focusPoint}
                       onChange={(e) => setReframeSettings({...reframeSettings, focusPoint: e.target.value})}
@@ -300,6 +336,19 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                       <option value="face">Face Tracking</option>
                       <option value="action">Action Focus</option>
                     </select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="autoTrack"
+                      checked={reframeSettings.autoTrack}
+                      onChange={(e) => setReframeSettings({...reframeSettings, autoTrack: e.target.checked})}
+                      className="rounded"
+                    />
+                    <label htmlFor="autoTrack" className="text-white">
+                      Auto Tracking
+                    </label>
                   </div>
                 </div>
               </CardContent>
@@ -319,10 +368,16 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                         {currentVideo?.duration || '45:30'}
                       </span>
                       <span>{currentVideo?.size || '1.2 GB'}</span>
+                      {fastMode && (
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                          <Zap className="w-3 h-3 mr-1" />
+                          Fast Mode
+                        </Badge>
+                      )}
                       {captionsEnabled && (
                         <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                           <Captions className="w-3 h-3 mr-1" />
-                          Captions Enabled
+                          {captionStyle.toUpperCase()} Captions
                         </Badge>
                       )}
                     </div>
@@ -331,7 +386,7 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                     variant={!isProcessing ? "default" : "secondary"}
                     className={!isProcessing ? "bg-green-600" : "bg-yellow-600"}
                   >
-                    {!isProcessing ? 'Completed' : 'Processing'}
+                    {!isProcessing ? '✅ Completed' : '⚡ Processing'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -341,17 +396,17 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">
-                        {processingMessage || 'AI Analysis Progress'}
+                        {processingMessage || '⚡ Fast AI Analysis Progress'}
                       </span>
                       <span className="text-purple-400">{Math.round(processingProgress)}%</span>
                     </div>
                     <Progress value={processingProgress} className="mb-2" />
                     <p className="text-sm text-gray-500">
-                      {processingStage === 'analysis' && 'Detecting viral moments and optimal segments...'}
-                      {processingStage === 'generation' && 'Auto-reframing to specified format and generating clips...'}
-                      {processingStage === 'captions' && 'Generating AI captions with animations...'}
-                      {processingStage === 'complete' && 'Processing complete! Your viral shorts are ready.'}
-                      {!processingStage && 'Analyzing audio patterns, detecting viral moments, and optimizing clips...'}
+                      {processingStage === 'analysis' && '🎯 Fast detection of viral moments and optimal segments...'}
+                      {processingStage === 'generation' && '🎨 Auto-reframing to vertical format with fast algorithms...'}
+                      {processingStage === 'captions' && `📝 Generating ${captionStyle.toUpperCase()}-style animated captions...`}
+                      {processingStage === 'complete' && '✅ Fast processing complete! Your viral shorts are ready.'}
+                      {!processingStage && '⚡ Fast analyzing audio patterns and optimizing clips...'}
                     </p>
                   </div>
                 </CardContent>
@@ -364,11 +419,11 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-2">
-                      Generated Viral Shorts
+                      🎯 Generated Viral Shorts
                     </h2>
                     <p className="text-gray-400">
-                      AI has identified {generatedShorts.length} high-engagement clips with auto-reframing
-                      {captionsEnabled && ' and animated captions'}
+                      ⚡ Fast AI identified {generatedShorts.length} high-engagement clips with auto-reframing
+                      {captionsEnabled && ` and ${captionStyle.toUpperCase()}-style animated captions`}
                     </p>
                   </div>
                   <Button 
@@ -396,14 +451,19 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                           ) : (
                             <div className="flex flex-col items-center">
                               <Play className="w-12 h-12 text-white/70 mb-2" />
-                              <span className="text-xs text-white/50">Processing...</span>
+                              <span className="text-xs text-white/50">⚡ Processing...</span>
                             </div>
                           )}
                           
-                          {/* Caption Preview */}
+                          {/* Enhanced Caption Preview */}
                           {short.captions && short.captions.length > 0 && (
                             <div className="absolute bottom-4 left-4 right-4">
-                              <div className="bg-black/80 text-white text-xs p-2 rounded text-center animate-fade-in">
+                              <div className={`bg-black/80 text-white text-xs p-2 rounded text-center transition-all duration-300 ${
+                                short.captions[0].animation === 'typewriter' ? 'animate-pulse' :
+                                short.captions[0].animation === 'bounce' ? 'animate-bounce' :
+                                short.captions[0].animation === 'slide' ? 'animate-slide-in-right' :
+                                'animate-fade-in'
+                              }`}>
                                 {short.captions[0].text}
                               </div>
                             </div>
@@ -420,13 +480,35 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                           {short.captions && (
                             <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                               <Captions className="w-3 h-3 mr-1" />
-                              {short.captions.length} lines
+                              {short.captions.length} {captionStyle}
                             </Badge>
                           )}
                         </div>
                       </CardHeader>
                       
                       <CardContent className="pt-0">
+                        {/* Enhanced Caption Preview */}
+                        {short.captions && short.captions.length > 0 && (
+                          <div className="mb-4 p-3 bg-gray-800/50 rounded-lg">
+                            <h4 className="text-white text-sm font-semibold mb-2">
+                              🎨 {captionStyle.toUpperCase()} Caption Preview:
+                            </h4>
+                            <div className="space-y-1">
+                              {short.captions.slice(0, 2).map((caption, index) => (
+                                <div key={index} className="text-xs text-gray-300 flex justify-between">
+                                  <span>"{caption.text}"</span>
+                                  <span className="text-purple-400">{caption.animation}</span>
+                                </div>
+                              ))}
+                              {short.captions.length > 2 && (
+                                <div className="text-xs text-gray-500">
+                                  +{short.captions.length - 2} more captions...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="mb-4">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-gray-400">Engagement Score</span>
