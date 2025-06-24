@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit, Terminal, Captions, Settings, Zap } from 'lucide-react';
+import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit, Terminal, Captions, Settings, Zap, Mic, Volume2, Sparkles } from 'lucide-react';
 import { videoProcessor, VideoClip } from '@/services/videoProcessor';
+import { voiceService, VoiceSettings } from '@/services/voiceService';
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
@@ -21,14 +22,21 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [showConsole, setShowConsole] = useState(false);
+  
+  // Enhanced settings
   const [captionsEnabled, setCaptionsEnabled] = useState(true);
   const [captionStyle, setCaptionStyle] = useState<'opus' | 'tiktok' | 'youtube'>('opus');
-  const [fastMode, setFastMode] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [quality, setQuality] = useState<'HD' | 'FHD' | '4K'>('FHD');
+  const [selectedVoice, setSelectedVoice] = useState('9BWtsMINqrJLrRacOk9x');
+  const [selectedModel, setSelectedModel] = useState('eleven_multilingual_v2');
   const [reframeSettings, setReframeSettings] = useState({
     aspectRatio: '9:16',
     focusPoint: 'center',
     autoTrack: true
   });
+  
   const { toast } = useToast();
 
   const addConsoleLog = (message: string) => {
@@ -39,15 +47,15 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   };
 
   useEffect(() => {
-    addConsoleLog('🚀 FAST MODE Dashboard initialized');
+    addConsoleLog('🚀 HIGH-QUALITY Dashboard initialized with premium features');
     if (currentVideo && currentVideo.file) {
-      addConsoleLog(`⚡ Processing video: ${currentVideo.name} with FAST MODE enabled`);
+      addConsoleLog(`⚡ Processing video: ${currentVideo.name} in ${quality} quality`);
       processVideoFile();
     } else {
-      addConsoleLog('📝 No video file provided, generating OPUS-style mock data');
-      // Enhanced mock data with Opus-style captions
+      addConsoleLog('📝 Generating premium mock data with voice and enhanced captions');
+      // Enhanced mock data
       setTimeout(() => {
-        addConsoleLog('🎯 Generating viral clips with OPUS captions');
+        addConsoleLog('🎯 Generating premium viral clips with voice and advanced captions');
         setGeneratedShorts([
           {
             id: '1',
@@ -57,11 +65,30 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             duration: 30,
             engagementScore: 95,
             description: "High-energy viral moment with maximum engagement potential",
+            quality: 'FHD',
             captions: [
-              { text: "This is the moment", start: 0, end: 1.5, style: 'highlight', position: 'center', animation: 'typewriter' },
-              { text: "that changes everything", start: 1.7, end: 3.2, style: 'emphasis', position: 'center', animation: 'bounce' },
-              { text: "Pay close attention", start: 3.5, end: 5.0, style: 'normal', position: 'bottom', animation: 'slide' },
-              { text: "to what happens next", start: 5.2, end: 6.8, style: 'highlight', position: 'center', animation: 'fade' }
+              { 
+                text: "THIS MOMENT WILL", 
+                start: 0, 
+                end: 1.5, 
+                style: 'highlight', 
+                position: 'center', 
+                animation: 'typewriter',
+                fontSize: 48,
+                backgroundColor: 'rgba(255,215,0,0.9)',
+                textColor: '#000000'
+              },
+              { 
+                text: "CHANGE EVERYTHING", 
+                start: 1.7, 
+                end: 3.2, 
+                style: 'emphasis', 
+                position: 'center', 
+                animation: 'bounce',
+                fontSize: 48,
+                backgroundColor: 'rgba(255,0,100,0.8)',
+                textColor: '#FFFFFF'
+              }
             ]
           },
           {
@@ -72,37 +99,47 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             duration: 45,
             engagementScore: 88,
             description: "Emotional peak designed for maximum shares and saves",
+            quality: 'FHD',
             captions: [
-              { text: "The secret they don't", start: 0, end: 1.8, style: 'emphasis', position: 'top', animation: 'typewriter' },
-              { text: "want you to know", start: 2.0, end: 3.5, style: 'highlight', position: 'center', animation: 'bounce' },
-              { text: "is about to be revealed", start: 3.8, end: 5.5, style: 'normal', position: 'bottom', animation: 'slide' }
-            ]
-          },
-          {
-            id: '3',
-            title: "🚀 Game-Changing Moment",
-            startTime: 300,
-            endTime: 315,
-            duration: 15,
-            engagementScore: 92,
-            description: "Entertainment gold with built-in shareability factors",
-            captions: [
-              { text: "Everything you knew", start: 0, end: 1.5, style: 'normal', position: 'center', animation: 'fade' },
-              { text: "was completely wrong", start: 1.7, end: 3.2, style: 'highlight', position: 'center', animation: 'typewriter' }
+              { 
+                text: "THE SECRET THEY", 
+                start: 0, 
+                end: 1.8, 
+                style: 'emphasis', 
+                position: 'top', 
+                animation: 'typewriter',
+                fontSize: 36,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                textColor: '#FFFFFF'
+              }
             ]
           }
         ]);
         setProcessingProgress(100);
         setIsProcessing(false);
-        addConsoleLog('✅ OPUS mock data generation completed with animated captions');
-      }, 2000); // Faster mock processing
+        addConsoleLog('✅ Premium mock data generation completed');
+      }, 2000);
     }
-  }, [currentVideo]);
+  }, [currentVideo, quality]);
 
   const processVideoFile = async () => {
     try {
-      addConsoleLog('🚀 Starting FAST MODE video processing pipeline');
-      addConsoleLog(`🎨 Caption style: ${captionStyle.toUpperCase()}, Fast mode: ${fastMode ? 'ON' : 'OFF'}`);
+      addConsoleLog(`🚀 Starting ${quality} video processing with premium features`);
+      addConsoleLog(`🎨 Settings: Captions=${captionsEnabled}, Voice=${voiceEnabled}, Style=${captionStyle.toUpperCase()}`);
+      
+      if (voiceEnabled && apiKey) {
+        voiceService.setApiKey(apiKey);
+        addConsoleLog('🎙️ ElevenLabs API configured successfully');
+      }
+      
+      const voiceSettings: VoiceSettings = {
+        voiceId: selectedVoice,
+        model: selectedModel,
+        stability: 0.5,
+        similarityBoost: 0.8,
+        style: 0.2,
+        useSpeakerBoost: true
+      };
       
       const clips = await videoProcessor.processVideo(
         currentVideo.file, 
@@ -110,28 +147,30 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
           setProcessingProgress(progress.progress);
           setProcessingStage(progress.stage);
           setProcessingMessage(progress.message);
-          addConsoleLog(`⚡ FAST: ${progress.stage} - ${progress.message} (${progress.progress}%)`);
+          addConsoleLog(`⚡ ${quality}: ${progress.stage} - ${progress.message} (${progress.progress}%)`);
         },
         {
           generateCaptions: captionsEnabled,
           captionStyle: captionStyle,
+          generateVoice: voiceEnabled && !!apiKey,
+          voiceSettings: voiceEnabled && apiKey ? voiceSettings : undefined,
           reframeSettings: reframeSettings,
-          fastMode: fastMode
+          quality: quality
         }
       );
       
-      addConsoleLog(`🏆 FAST MODE: Generated ${clips.length} clips with ${captionStyle} captions successfully`);
+      addConsoleLog(`🏆 ${quality} PROCESSING: Generated ${clips.length} premium clips successfully`);
       setGeneratedShorts(clips);
       setIsProcessing(false);
       
       toast({
-        title: "⚡ Fast Processing Complete!",
-        description: `Generated ${clips.length} viral-ready clips with ${captionStyle.toUpperCase()} captions in record time`,
+        title: `✨ ${quality} Processing Complete!`,
+        description: `Generated ${clips.length} premium viral clips${voiceEnabled ? ' with AI voiceovers' : ''}`,
       });
       
     } catch (error) {
-      console.error('❌ FAST MODE: Video processing failed:', error);
-      addConsoleLog(`❌ Error: Fast video processing failed - ${error}`);
+      console.error(`❌ ${quality} PROCESSING: Failed:`, error);
+      addConsoleLog(`❌ Error: ${quality} processing failed - ${error}`);
       toast({
         title: "Processing Failed",
         description: "Unable to process video. Please try again.",
@@ -200,7 +239,6 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
       }}></div>
       
       <div className="relative min-h-screen">
-        {/* Header */}
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -213,8 +251,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-white">AI Video Processing</h1>
-                <p className="text-gray-400">Auto-reframing, captions, and short clip generation</p>
+                <h1 className="text-2xl font-bold text-white">✨ Premium AI Video Processing</h1>
+                <p className="text-gray-400">High-quality reframing, captions, and AI voiceovers</p>
               </div>
             </div>
             
@@ -226,13 +264,6 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
               >
                 <Terminal className="w-4 h-4 mr-2" />
                 Console
-              </Button>
-              <Button
-                variant="outline"
-                className="text-white border-gray-600"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
               </Button>
             </div>
           </div>
@@ -246,7 +277,7 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center">
                     <Terminal className="w-4 h-4 mr-2" />
-                    ⚡ Fast Processing Console
+                    ✨ Premium Processing Console
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -264,91 +295,123 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             {/* Enhanced Processing Settings */}
             <Card className="bg-black/40 border-gray-800 backdrop-blur-sm mb-6">
               <CardHeader>
-                <CardTitle className="text-white">⚡ Fast Processing Options</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  ✨ Premium Processing Settings
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-4 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="fastMode"
-                      checked={fastMode}
-                      onChange={(e) => setFastMode(e.target.checked)}
-                      className="rounded"
-                    />
-                    <label htmlFor="fastMode" className="text-white flex items-center">
-                      <Zap className="w-4 h-4 mr-2" />
-                      Fast Mode
-                    </label>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {/* Quality Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-white font-semibold">🎬 Video Quality</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <label className="text-white">Quality:</label>
+                        <select
+                          value={quality}
+                          onChange={(e) => setQuality(e.target.value as 'HD' | 'FHD' | '4K')}
+                          className="bg-gray-800 text-white rounded px-2 py-1"
+                        >
+                          <option value="HD">🎥 HD (720p)</option>
+                          <option value="FHD">🎬 Full HD (1080p)</option>
+                          <option value="4K">✨ 4K Ultra HD</option>
+                        </select>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <label className="text-white">Aspect Ratio:</label>
+                        <select
+                          value={reframeSettings.aspectRatio}
+                          onChange={(e) => setReframeSettings({...reframeSettings, aspectRatio: e.target.value})}
+                          className="bg-gray-800 text-white rounded px-2 py-1"
+                        >
+                          <option value="9:16">📱 9:16 (Vertical)</option>
+                          <option value="16:9">🖥️ 16:9 (Horizontal)</option>
+                          <option value="1:1">⬜ 1:1 (Square)</option>
+                          <option value="4:5">📸 4:5 (Instagram)</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="captions"
-                      checked={captionsEnabled}
-                      onChange={(e) => setCaptionsEnabled(e.target.checked)}
-                      className="rounded"
-                    />
-                    <label htmlFor="captions" className="text-white flex items-center">
-                      <Captions className="w-4 h-4 mr-2" />
-                      Auto-Captions
-                    </label>
+
+                  {/* Caption Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-white font-semibold">📝 Premium Captions</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="captions"
+                          checked={captionsEnabled}
+                          onChange={(e) => setCaptionsEnabled(e.target.checked)}
+                          className="rounded"
+                        />
+                        <label htmlFor="captions" className="text-white flex items-center">
+                          <Captions className="w-4 h-4 mr-2" />
+                          Auto-Captions
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <label className="text-white">Style:</label>
+                        <select
+                          value={captionStyle}
+                          onChange={(e) => setCaptionStyle(e.target.value as 'opus' | 'tiktok' | 'youtube')}
+                          className="bg-gray-800 text-white rounded px-2 py-1"
+                          disabled={!captionsEnabled}
+                        >
+                          <option value="opus">🎯 Opus Premium</option>
+                          <option value="tiktok">📱 TikTok Style</option>
+                          <option value="youtube">📺 YouTube Style</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <label className="text-white">Caption Style:</label>
-                    <select
-                      value={captionStyle}
-                      onChange={(e) => setCaptionStyle(e.target.value as 'opus' | 'tiktok' | 'youtube')}
-                      className="bg-gray-800 text-white rounded px-2 py-1"
-                    >
-                      <option value="opus">🎯 Opus Style</option>
-                      <option value="tiktok">📱 TikTok Style</option>
-                      <option value="youtube">📺 YouTube Style</option>
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <label className="text-white">Aspect Ratio:</label>
-                    <select
-                      value={reframeSettings.aspectRatio}
-                      onChange={(e) => setReframeSettings({...reframeSettings, aspectRatio: e.target.value})}
-                      className="bg-gray-800 text-white rounded px-2 py-1"
-                    >
-                      <option value="9:16">9:16 (Vertical)</option>
-                      <option value="16:9">16:9 (Horizontal)</option>
-                      <option value="1:1">1:1 (Square)</option>
-                      <option value="4:5">4:5 (Instagram)</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-4 mt-4">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-white">Focus Point:</label>
-                    <select
-                      value={reframeSettings.focusPoint}
-                      onChange={(e) => setReframeSettings({...reframeSettings, focusPoint: e.target.value})}
-                      className="bg-gray-800 text-white rounded px-2 py-1"
-                    >
-                      <option value="center">Center</option>
-                      <option value="face">Face Tracking</option>
-                      <option value="action">Action Focus</option>
-                    </select>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="autoTrack"
-                      checked={reframeSettings.autoTrack}
-                      onChange={(e) => setReframeSettings({...reframeSettings, autoTrack: e.target.checked})}
-                      className="rounded"
-                    />
-                    <label htmlFor="autoTrack" className="text-white">
-                      Auto Tracking
-                    </label>
+
+                  {/* Voice Settings */}
+                  <div className="space-y-4">
+                    <h3 className="text-white font-semibold">🎙️ AI Voiceovers</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="voice"
+                          checked={voiceEnabled}
+                          onChange={(e) => setVoiceEnabled(e.target.checked)}
+                          className="rounded"
+                        />
+                        <label htmlFor="voice" className="text-white flex items-center">
+                          <Volume2 className="w-4 h-4 mr-2" />
+                          Generate Voice
+                        </label>
+                      </div>
+                      
+                      {voiceEnabled && (
+                        <>
+                          <input
+                            type="password"
+                            placeholder="ElevenLabs API Key"
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            className="w-full bg-gray-800 text-white rounded px-2 py-1 text-sm"
+                          />
+                          
+                          <div className="flex items-center space-x-2">
+                            <label className="text-white text-sm">Voice:</label>
+                            <select
+                              value={selectedVoice}
+                              onChange={(e) => setSelectedVoice(e.target.value)}
+                              className="bg-gray-800 text-white rounded px-2 py-1 text-sm"
+                            >
+                              {voiceService.getDefaultVoices().map(voice => (
+                                <option key={voice.id} value={voice.id}>{voice.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -368,16 +431,20 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                         {currentVideo?.duration || '45:30'}
                       </span>
                       <span>{currentVideo?.size || '1.2 GB'}</span>
-                      {fastMode && (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                          <Zap className="w-3 h-3 mr-1" />
-                          Fast Mode
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {quality} Quality
+                      </Badge>
                       {captionsEnabled && (
                         <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                           <Captions className="w-3 h-3 mr-1" />
-                          {captionStyle.toUpperCase()} Captions
+                          {captionStyle.toUpperCase()}
+                        </Badge>
+                      )}
+                      {voiceEnabled && apiKey && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          <Mic className="w-3 h-3 mr-1" />
+                          AI Voice
                         </Badge>
                       )}
                     </div>
@@ -396,17 +463,18 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-400">
-                        {processingMessage || '⚡ Fast AI Analysis Progress'}
+                        {processingMessage || `⚡ ${quality} Processing Progress`}
                       </span>
                       <span className="text-purple-400">{Math.round(processingProgress)}%</span>
                     </div>
                     <Progress value={processingProgress} className="mb-2" />
                     <p className="text-sm text-gray-500">
-                      {processingStage === 'analysis' && '🎯 Fast detection of viral moments and optimal segments...'}
-                      {processingStage === 'generation' && '🎨 Auto-reframing to vertical format with fast algorithms...'}
-                      {processingStage === 'captions' && `📝 Generating ${captionStyle.toUpperCase()}-style animated captions...`}
-                      {processingStage === 'complete' && '✅ Fast processing complete! Your viral shorts are ready.'}
-                      {!processingStage && '⚡ Fast analyzing audio patterns and optimizing clips...'}
+                      {processingStage === 'analysis' && `🎯 Premium AI analyzing viral moments in ${quality}...`}
+                      {processingStage === 'generation' && `🎨 Generating ${quality} video clips with premium reframing...`}
+                      {processingStage === 'captions' && `📝 Creating ${captionStyle.toUpperCase()} premium captions...`}
+                      {processingStage === 'voice' && '🎙️ Generating AI voiceovers with ElevenLabs...'}
+                      {processingStage === 'complete' && `✅ ${quality} processing complete with premium features!`}
+                      {!processingStage && `⚡ Premium ${quality} analysis in progress...`}
                     </p>
                   </div>
                 </CardContent>
@@ -419,11 +487,12 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-2">
-                      🎯 Generated Viral Shorts
+                      ✨ Premium Viral Shorts ({quality})
                     </h2>
                     <p className="text-gray-400">
-                      ⚡ Fast AI identified {generatedShorts.length} high-engagement clips with auto-reframing
-                      {captionsEnabled && ` and ${captionStyle.toUpperCase()}-style animated captions`}
+                      🎯 AI generated {generatedShorts.length} high-engagement clips in {quality} quality
+                      {captionsEnabled && ` with ${captionStyle.toUpperCase()} captions`}
+                      {voiceEnabled && apiKey && ' and AI voiceovers'}
                     </p>
                   </div>
                   <Button 
@@ -451,23 +520,32 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                           ) : (
                             <div className="flex flex-col items-center">
                               <Play className="w-12 h-12 text-white/70 mb-2" />
-                              <span className="text-xs text-white/50">⚡ Processing...</span>
+                              <span className="text-xs text-white/50">⚡ {quality} Processing...</span>
                             </div>
                           )}
                           
-                          {/* Enhanced Caption Preview */}
+                          {/* Premium Caption Preview */}
                           {short.captions && short.captions.length > 0 && (
                             <div className="absolute bottom-4 left-4 right-4">
-                              <div className={`bg-black/80 text-white text-xs p-2 rounded text-center transition-all duration-300 ${
-                                short.captions[0].animation === 'typewriter' ? 'animate-pulse' :
-                                short.captions[0].animation === 'bounce' ? 'animate-bounce' :
-                                short.captions[0].animation === 'slide' ? 'animate-slide-in-right' :
-                                'animate-fade-in'
-                              }`}>
+                              <div 
+                                className="text-white text-xs p-2 rounded text-center font-bold transition-all duration-300"
+                                style={{
+                                  backgroundColor: short.captions[0].backgroundColor || 'rgba(0,0,0,0.8)',
+                                  color: short.captions[0].textColor || '#FFFFFF',
+                                  fontSize: `${(short.captions[0].fontSize || 24) / 3}px`
+                                }}
+                              >
                                 {short.captions[0].text}
                               </div>
                             </div>
                           )}
+
+                          {/* Quality Badge */}
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                              {short.quality}
+                            </Badge>
+                          </div>
                         </div>
                         
                         <CardTitle className="text-white text-lg">{short.title}</CardTitle>
@@ -480,29 +558,38 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                           {short.captions && (
                             <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                               <Captions className="w-3 h-3 mr-1" />
-                              {short.captions.length} {captionStyle}
+                              {short.captions.length}
+                            </Badge>
+                          )}
+                          {short.audioBlob && (
+                            <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                              <Volume2 className="w-3 h-3 mr-1" />
+                              Voice
                             </Badge>
                           )}
                         </div>
                       </CardHeader>
                       
                       <CardContent className="pt-0">
-                        {/* Enhanced Caption Preview */}
+                        {/* Premium Caption Details */}
                         {short.captions && short.captions.length > 0 && (
                           <div className="mb-4 p-3 bg-gray-800/50 rounded-lg">
                             <h4 className="text-white text-sm font-semibold mb-2">
-                              🎨 {captionStyle.toUpperCase()} Caption Preview:
+                              ✨ {captionStyle.toUpperCase()} Premium Captions:
                             </h4>
                             <div className="space-y-1">
                               {short.captions.slice(0, 2).map((caption, index) => (
                                 <div key={index} className="text-xs text-gray-300 flex justify-between">
                                   <span>"{caption.text}"</span>
-                                  <span className="text-purple-400">{caption.animation}</span>
+                                  <div className="flex gap-1">
+                                    <span className="text-purple-400">{caption.animation}</span>
+                                    <span className="text-blue-400">{caption.fontSize}px</span>
+                                  </div>
                                 </div>
                               ))}
                               {short.captions.length > 2 && (
                                 <div className="text-xs text-gray-500">
-                                  +{short.captions.length - 2} more captions...
+                                  +{short.captions.length - 2} more premium captions...
                                 </div>
                               )}
                             </div>
