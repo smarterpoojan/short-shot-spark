@@ -5,6 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit } from 'lucide-react';
+import { videoProcessor } from '@/services/videoProcessor';
+import { useToast } from "@/hooks/use-toast";
+
+interface VideoClip {
+  id: string;
+  title: string;
+  duration: number;
+  engagementScore: number;
+  description: string;
+  blob?: Blob;
+  url?: string;
+}
 
 interface DashboardProps {
   videos: any[];
@@ -13,50 +25,119 @@ interface DashboardProps {
 
 export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState('');
+  const [processingMessage, setProcessingMessage] = useState('');
   const [currentVideo] = videos;
-  const [generatedShorts, setGeneratedShorts] = useState([]);
+  const [generatedShorts, setGeneratedShorts] = useState<VideoClip[]>([]);
+  const [isProcessing, setIsProcessing] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate AI processing
-    const interval = setInterval(() => {
-      setProcessingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          // Generate mock shorts
-          setGeneratedShorts([
-            {
-              id: 1,
-              title: "Viral Moment #1: Key Insight",
-              duration: "0:30",
-              engagementScore: 95,
-              format: "9:16",
-              description: "High-energy segment with actionable advice"
-            },
-            {
-              id: 2,
-              title: "Emotional Peak #2: Story Time",
-              duration: "0:45",
-              engagementScore: 88,
-              format: "9:16",
-              description: "Personal story with emotional connection"
-            },
-            {
-              id: 3,
-              title: "Quick Tip #3: How-To Guide",
-              duration: "0:15",
-              engagementScore: 92,
-              format: "9:16",
-              description: "Practical tip in bite-sized format"
-            }
-          ]);
-          return 100;
-        }
-        return prev + Math.random() * 8;
-      });
-    }, 300);
+    if (currentVideo && currentVideo.file) {
+      processVideoFile();
+    } else {
+      // Fallback to mock data if no actual file
+      setTimeout(() => {
+        setGeneratedShorts([
+          {
+            id: '1',
+            title: "Viral Moment #1: Key Insight",
+            duration: 30,
+            engagementScore: 95,
+            description: "High-energy segment with actionable advice"
+          },
+          {
+            id: '2',
+            title: "Emotional Peak #2: Story Time",
+            duration: 45,
+            engagementScore: 88,
+            description: "Personal story with emotional connection"
+          },
+          {
+            id: '3',
+            title: "Quick Tip #3: How-To Guide",
+            duration: 15,
+            engagementScore: 92,
+            description: "Practical tip in bite-sized format"
+          }
+        ]);
+        setProcessingProgress(100);
+        setIsProcessing(false);
+      }, 3000);
+    }
+  }, [currentVideo]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const processVideoFile = async () => {
+    try {
+      const clips = await videoProcessor.processVideo(currentVideo.file, (progress) => {
+        setProcessingProgress(progress.progress);
+        setProcessingStage(progress.stage);
+        setProcessingMessage(progress.message);
+      });
+      
+      setGeneratedShorts(clips);
+      setIsProcessing(false);
+      
+      toast({
+        title: "Processing Complete!",
+        description: `Generated ${clips.length} viral-ready short clips`,
+      });
+      
+    } catch (error) {
+      console.error('Video processing failed:', error);
+      toast({
+        title: "Processing Failed",
+        description: "Unable to process video. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownload = (clip: VideoClip) => {
+    if (clip.blob) {
+      videoProcessor.downloadClip(clip);
+      toast({
+        title: "Download Started",
+        description: `Downloading ${clip.title}`,
+      });
+    } else {
+      toast({
+        title: "Download Unavailable",
+        description: "Video processing is still in progress",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadAll = () => {
+    const availableClips = generatedShorts.filter(clip => clip.blob);
+    if (availableClips.length === 0) {
+      toast({
+        title: "No Downloads Available",
+        description: "Please wait for processing to complete",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    availableClips.forEach((clip, index) => {
+      setTimeout(() => {
+        videoProcessor.downloadClip(clip);
+      }, index * 1000); // Stagger downloads
+    });
+    
+    toast({
+      title: "Batch Download Started",
+      description: `Downloading ${availableClips.length} clips`,
+    });
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -78,8 +159,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                 Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-white">Project Dashboard</h1>
-                <p className="text-gray-400">AI-powered short video generation</p>
+                <h1 className="text-2xl font-bold text-white">AI Video Processing</h1>
+                <p className="text-gray-400">Auto-reframing and short clip generation</p>
               </div>
             </div>
           </div>
@@ -104,24 +185,29 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                     </div>
                   </div>
                   <Badge 
-                    variant={processingProgress === 100 ? "default" : "secondary"}
-                    className={processingProgress === 100 ? "bg-green-600" : "bg-yellow-600"}
+                    variant={!isProcessing ? "default" : "secondary"}
+                    className={!isProcessing ? "bg-green-600" : "bg-yellow-600"}
                   >
-                    {processingProgress === 100 ? 'Completed' : 'Processing'}
+                    {!isProcessing ? 'Completed' : 'Processing'}
                   </Badge>
                 </div>
               </CardHeader>
               
-              {processingProgress < 100 && (
+              {isProcessing && (
                 <CardContent>
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">AI Analysis Progress</span>
+                      <span className="text-gray-400">
+                        {processingMessage || 'AI Analysis Progress'}
+                      </span>
                       <span className="text-purple-400">{Math.round(processingProgress)}%</span>
                     </div>
                     <Progress value={processingProgress} className="mb-2" />
                     <p className="text-sm text-gray-500">
-                      Analyzing audio patterns, detecting viral moments, and optimizing clips...
+                      {processingStage === 'analysis' && 'Detecting viral moments and optimal segments...'}
+                      {processingStage === 'generation' && 'Auto-reframing to 9:16 format and generating clips...'}
+                      {processingStage === 'complete' && 'Processing complete! Your viral shorts are ready.'}
+                      {!processingStage && 'Analyzing audio patterns, detecting viral moments, and optimizing clips...'}
                     </p>
                   </div>
                 </CardContent>
@@ -137,12 +223,16 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                       Generated Viral Shorts
                     </h2>
                     <p className="text-gray-400">
-                      AI has identified {generatedShorts.length} high-engagement clips
+                      AI has identified {generatedShorts.length} high-engagement clips with auto-reframing
                     </p>
                   </div>
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                  <Button 
+                    onClick={handleDownloadAll}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    disabled={generatedShorts.filter(clip => clip.blob).length === 0}
+                  >
                     <Download className="w-4 h-4 mr-2" />
-                    Download All
+                    Download All ({generatedShorts.filter(clip => clip.blob).length})
                   </Button>
                 </div>
 
@@ -150,16 +240,28 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                   {generatedShorts.map((short) => (
                     <Card key={short.id} className="bg-black/40 border-gray-800 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300">
                       <CardHeader className="pb-4">
-                        <div className="aspect-[9/16] bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-lg flex items-center justify-center mb-4 border border-gray-700">
-                          <Play className="w-12 h-12 text-white/70" />
+                        <div className="aspect-[9/16] bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-lg flex items-center justify-center mb-4 border border-gray-700 relative overflow-hidden">
+                          {short.url ? (
+                            <video 
+                              src={short.url} 
+                              className="w-full h-full object-cover rounded-lg"
+                              muted
+                              loop
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center">
+                              <Play className="w-12 h-12 text-white/70 mb-2" />
+                              <span className="text-xs text-white/50">Processing...</span>
+                            </div>
+                          )}
                         </div>
                         <CardTitle className="text-white text-lg">{short.title}</CardTitle>
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <span className="flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
-                            {short.duration}
+                            {formatDuration(short.duration)}
                           </span>
-                          <span>{short.format}</span>
+                          <span>9:16</span>
                         </div>
                       </CardHeader>
                       
@@ -168,7 +270,7 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-gray-400">Engagement Score</span>
                             <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              {short.engagementScore}%
+                              {Math.round(short.engagementScore)}%
                             </Badge>
                           </div>
                           <Progress value={short.engagementScore} className="mb-2" />
@@ -179,13 +281,24 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                         </p>
                         
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1 border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white"
+                            disabled={!short.url}
+                          >
                             <Eye className="w-4 h-4 mr-2" />
                             Preview
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1 border-gray-600 text-gray-400 hover:bg-gray-600 hover:text-white">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                            onClick={() => handleDownload(short)}
+                            disabled={!short.blob}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
                           </Button>
                         </div>
                       </CardContent>

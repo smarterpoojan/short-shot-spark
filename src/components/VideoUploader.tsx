@@ -78,7 +78,7 @@ export const VideoUploader = ({ onUploadComplete, onBack }: VideoUploaderProps) 
           clearInterval(interval);
           setIsUploading(false);
           
-          // Simulate video data
+          // Pass the actual file for processing
           const videoData = {
             id: Date.now(),
             name: file.name,
@@ -86,14 +86,15 @@ export const VideoUploader = ({ onUploadComplete, onBack }: VideoUploaderProps) 
             size: formatFileSize(file.size),
             uploadedAt: new Date().toISOString(),
             status: 'processing',
-            thumbnailUrl: '/placeholder.svg'
+            thumbnailUrl: '/placeholder.svg',
+            file: file // Include the actual file for processing
           };
           
           onUploadComplete(videoData);
           
           toast({
             title: "Upload Complete!",
-            description: "Your video is now being processed by AI",
+            description: "Your video is now being processed by AI with auto-reframing",
           });
           
           return 100;
