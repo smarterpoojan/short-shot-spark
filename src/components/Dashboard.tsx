@@ -45,6 +45,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
           {
             id: '1',
             title: "Viral Moment #1: Key Insight",
+            startTime: 15,
+            endTime: 45,
             duration: 30,
             engagementScore: 95,
             description: "High-energy segment with actionable advice"
@@ -52,6 +54,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
           {
             id: '2',
             title: "Emotional Peak #2: Story Time",
+            startTime: 120,
+            endTime: 165,
             duration: 45,
             engagementScore: 88,
             description: "Personal story with emotional connection"
@@ -59,6 +63,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
           {
             id: '3',
             title: "Quick Tip #3: How-To Guide",
+            startTime: 300,
+            endTime: 315,
             duration: 15,
             engagementScore: 92,
             description: "Practical tip in bite-sized format"
