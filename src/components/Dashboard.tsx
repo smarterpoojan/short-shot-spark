@@ -1,25 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit } from 'lucide-react';
-import { videoProcessor } from '@/services/videoProcessor';
+import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit, Terminal, Captions, Settings } from 'lucide-react';
+import { videoProcessor, VideoClip } from '@/services/videoProcessor';
 import { useToast } from "@/hooks/use-toast";
-
-// Import VideoClip interface from videoProcessor instead of defining locally
-interface VideoClip {
-  id: string;
-  title: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  engagementScore: number;
-  description: string;
-  blob?: Blob;
-  url?: string;
-}
 
 interface DashboardProps {
   videos: any[];
@@ -33,14 +19,33 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   const [currentVideo] = videos;
   const [generatedShorts, setGeneratedShorts] = useState<VideoClip[]>([]);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  const [showConsole, setShowConsole] = useState(false);
+  const [captionsEnabled, setCaptionsEnabled] = useState(true);
+  const [reframeSettings, setReframeSettings] = useState({
+    aspectRatio: '9:16',
+    focusPoint: 'center',
+    autoTrack: true
+  });
   const { toast } = useToast();
 
+  const addConsoleLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(logMessage);
+    setConsoleLogs(prev => [...prev, logMessage]);
+  };
+
   useEffect(() => {
+    addConsoleLog('Dashboard initialized');
     if (currentVideo && currentVideo.file) {
+      addConsoleLog(`Processing video: ${currentVideo.name}`);
       processVideoFile();
     } else {
+      addConsoleLog('No video file provided, using mock data');
       // Fallback to mock data if no actual file
       setTimeout(() => {
+        addConsoleLog('Generating mock viral clips');
         setGeneratedShorts([
           {
             id: '1',
@@ -49,7 +54,12 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             endTime: 45,
             duration: 30,
             engagementScore: 95,
-            description: "High-energy segment with actionable advice"
+            description: "High-energy segment with actionable advice",
+            captions: [
+              { text: "This is the most important tip", start: 0, end: 2.5 },
+              { text: "that will change everything", start: 2.5, end: 4.8 },
+              { text: "for your success!", start: 4.8, end: 6.5 }
+            ]
           },
           {
             id: '2',
@@ -58,7 +68,12 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             endTime: 165,
             duration: 45,
             engagementScore: 88,
-            description: "Personal story with emotional connection"
+            description: "Personal story with emotional connection",
+            captions: [
+              { text: "Let me tell you a story", start: 0, end: 2.2 },
+              { text: "that changed my perspective", start: 2.2, end: 4.5 },
+              { text: "on everything I thought I knew", start: 4.5, end: 7.0 }
+            ]
           },
           {
             id: '3',
@@ -67,33 +82,50 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
             endTime: 315,
             duration: 15,
             engagementScore: 92,
-            description: "Practical tip in bite-sized format"
+            description: "Practical tip in bite-sized format",
+            captions: [
+              { text: "Here's the secret technique", start: 0, end: 2.0 },
+              { text: "that pros don't want you to know", start: 2.0, end: 4.5 }
+            ]
           }
         ]);
         setProcessingProgress(100);
         setIsProcessing(false);
+        addConsoleLog('Mock data generation completed');
       }, 3000);
     }
   }, [currentVideo]);
 
   const processVideoFile = async () => {
     try {
-      const clips = await videoProcessor.processVideo(currentVideo.file, (progress) => {
-        setProcessingProgress(progress.progress);
-        setProcessingStage(progress.stage);
-        setProcessingMessage(progress.message);
-      });
+      addConsoleLog('Starting video processing pipeline');
       
+      const clips = await videoProcessor.processVideo(
+        currentVideo.file, 
+        (progress) => {
+          setProcessingProgress(progress.progress);
+          setProcessingStage(progress.stage);
+          setProcessingMessage(progress.message);
+          addConsoleLog(`Processing: ${progress.stage} - ${progress.message} (${progress.progress}%)`);
+        },
+        {
+          generateCaptions: captionsEnabled,
+          reframeSettings: reframeSettings
+        }
+      );
+      
+      addConsoleLog(`Generated ${clips.length} clips successfully`);
       setGeneratedShorts(clips);
       setIsProcessing(false);
       
       toast({
         title: "Processing Complete!",
-        description: `Generated ${clips.length} viral-ready short clips`,
+        description: `Generated ${clips.length} viral-ready short clips with captions`,
       });
       
     } catch (error) {
       console.error('Video processing failed:', error);
+      addConsoleLog(`Error: Video processing failed - ${error}`);
       toast({
         title: "Processing Failed",
         description: "Unable to process video. Please try again.",
@@ -104,13 +136,16 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
   };
 
   const handleDownload = (clip: VideoClip) => {
+    addConsoleLog(`Initiating download for clip: ${clip.title}`);
     if (clip.blob) {
       videoProcessor.downloadClip(clip);
+      addConsoleLog(`Download started: ${clip.title}`);
       toast({
         title: "Download Started",
         description: `Downloading ${clip.title}`,
       });
     } else {
+      addConsoleLog(`Download failed: No blob available for ${clip.title}`);
       toast({
         title: "Download Unavailable",
         description: "Video processing is still in progress",
@@ -121,7 +156,10 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
 
   const handleDownloadAll = () => {
     const availableClips = generatedShorts.filter(clip => clip.blob);
+    addConsoleLog(`Batch download initiated for ${availableClips.length} clips`);
+    
     if (availableClips.length === 0) {
+      addConsoleLog('Batch download failed: No clips available');
       toast({
         title: "No Downloads Available",
         description: "Please wait for processing to complete",
@@ -133,7 +171,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
     availableClips.forEach((clip, index) => {
       setTimeout(() => {
         videoProcessor.downloadClip(clip);
-      }, index * 1000); // Stagger downloads
+        addConsoleLog(`Batch download ${index + 1}/${availableClips.length}: ${clip.title}`);
+      }, index * 1000);
     });
     
     toast({
@@ -169,14 +208,103 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-white">AI Video Processing</h1>
-                <p className="text-gray-400">Auto-reframing and short clip generation</p>
+                <p className="text-gray-400">Auto-reframing, captions, and short clip generation</p>
               </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={showConsole ? "default" : "outline"}
+                onClick={() => setShowConsole(!showConsole)}
+                className="text-white border-gray-600"
+              >
+                <Terminal className="w-4 h-4 mr-2" />
+                Console
+              </Button>
+              <Button
+                variant="outline"
+                className="text-white border-gray-600"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
             </div>
           </div>
         </div>
 
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
+            {/* Console Panel */}
+            {showConsole && (
+              <Card className="bg-black/80 border-gray-800 backdrop-blur-sm mb-6">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Terminal className="w-4 h-4 mr-2" />
+                    Processing Console
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-black/60 rounded p-4 max-h-48 overflow-y-auto font-mono text-sm">
+                    {consoleLogs.map((log, index) => (
+                      <div key={index} className="text-green-400 mb-1">
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Processing Settings */}
+            <Card className="bg-black/40 border-gray-800 backdrop-blur-sm mb-6">
+              <CardHeader>
+                <CardTitle className="text-white">Processing Options</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="captions"
+                      checked={captionsEnabled}
+                      onChange={(e) => setCaptionsEnabled(e.target.checked)}
+                      className="rounded"
+                    />
+                    <label htmlFor="captions" className="text-white flex items-center">
+                      <Captions className="w-4 h-4 mr-2" />
+                      Auto-generate Captions
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <label className="text-white">Aspect Ratio:</label>
+                    <select
+                      value={reframeSettings.aspectRatio}
+                      onChange={(e) => setReframeSettings({...reframeSettings, aspectRatio: e.target.value})}
+                      className="bg-gray-800 text-white rounded px-2 py-1"
+                    >
+                      <option value="9:16">9:16 (Vertical)</option>
+                      <option value="16:9">16:9 (Horizontal)</option>
+                      <option value="1:1">1:1 (Square)</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <label className="text-white">Focus:</label>
+                    <select
+                      value={reframeSettings.focusPoint}
+                      onChange={(e) => setReframeSettings({...reframeSettings, focusPoint: e.target.value})}
+                      className="bg-gray-800 text-white rounded px-2 py-1"
+                    >
+                      <option value="center">Center</option>
+                      <option value="face">Face Tracking</option>
+                      <option value="action">Action Focus</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Original Video Info */}
             <Card className="bg-black/40 border-gray-800 backdrop-blur-sm mb-8">
               <CardHeader>
@@ -191,6 +319,12 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                         {currentVideo?.duration || '45:30'}
                       </span>
                       <span>{currentVideo?.size || '1.2 GB'}</span>
+                      {captionsEnabled && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          <Captions className="w-3 h-3 mr-1" />
+                          Captions Enabled
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <Badge 
@@ -214,7 +348,8 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                     <Progress value={processingProgress} className="mb-2" />
                     <p className="text-sm text-gray-500">
                       {processingStage === 'analysis' && 'Detecting viral moments and optimal segments...'}
-                      {processingStage === 'generation' && 'Auto-reframing to 9:16 format and generating clips...'}
+                      {processingStage === 'generation' && 'Auto-reframing to specified format and generating clips...'}
+                      {processingStage === 'captions' && 'Generating AI captions with animations...'}
                       {processingStage === 'complete' && 'Processing complete! Your viral shorts are ready.'}
                       {!processingStage && 'Analyzing audio patterns, detecting viral moments, and optimizing clips...'}
                     </p>
@@ -233,6 +368,7 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                     </h2>
                     <p className="text-gray-400">
                       AI has identified {generatedShorts.length} high-engagement clips with auto-reframing
+                      {captionsEnabled && ' and animated captions'}
                     </p>
                   </div>
                   <Button 
@@ -263,14 +399,30 @@ export const Dashboard = ({ videos, onBack }: DashboardProps) => {
                               <span className="text-xs text-white/50">Processing...</span>
                             </div>
                           )}
+                          
+                          {/* Caption Preview */}
+                          {short.captions && short.captions.length > 0 && (
+                            <div className="absolute bottom-4 left-4 right-4">
+                              <div className="bg-black/80 text-white text-xs p-2 rounded text-center animate-fade-in">
+                                {short.captions[0].text}
+                              </div>
+                            </div>
+                          )}
                         </div>
+                        
                         <CardTitle className="text-white text-lg">{short.title}</CardTitle>
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <span className="flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
                             {formatDuration(short.duration)}
                           </span>
-                          <span>9:16</span>
+                          <span>{reframeSettings.aspectRatio}</span>
+                          {short.captions && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                              <Captions className="w-3 h-3 mr-1" />
+                              {short.captions.length} lines
+                            </Badge>
+                          )}
                         </div>
                       </CardHeader>
                       
