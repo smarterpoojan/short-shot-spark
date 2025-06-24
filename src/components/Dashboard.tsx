@@ -8,9 +8,12 @@ import { ArrowLeft, Video, Clock, Download, Play, TrendingUp, Eye, Edit } from '
 import { videoProcessor } from '@/services/videoProcessor';
 import { useToast } from "@/hooks/use-toast";
 
+// Import VideoClip interface from videoProcessor instead of defining locally
 interface VideoClip {
   id: string;
   title: string;
+  startTime: number;
+  endTime: number;
   duration: number;
   engagementScore: number;
   description: string;
